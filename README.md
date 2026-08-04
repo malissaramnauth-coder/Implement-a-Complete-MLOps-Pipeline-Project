@@ -1,2 +1,30 @@
-# Implement-a-Complete-MLOps-Pipeline-Project
-In this project, you will take a machine learning model from a raw dataset all the way through a production-ready MLOps pipeline. You will apply everything you learned in this sprint: version control with Git and DVC, experiment tracking with MLflow, automated testing with pytest, CI/CD with GitHub Actions, and drift monitoring with Evidently.
+README.md
+.gitignore
+requirements.txt
+dvc.yaml
+configs/
+  train_config.yaml
+src/
+  data/
+    dataset.py
+  preprocess.py
+  models/
+    train.py
+  evaluate.py
+  monitoring/
+    monitor_drift.py
+  utils/
+    mlflow_utils.py
+tests/
+  unit/
+    test_preprocess.py
+  data/
+    test_data_validation.py
+  model/
+    test_model_validation.py
+.github/
+  workflows/
+    ci.yml
+reports/
+  drift_report.html
+compare_experiments.py
