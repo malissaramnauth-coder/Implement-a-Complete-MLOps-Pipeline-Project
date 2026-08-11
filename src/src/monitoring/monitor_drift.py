@@ -9,7 +9,7 @@ import yaml
 from evidently import Report
 from evidently.metric_preset import DataDriftPreset
 
-from src.data.dataset import load_raw_data
+from src1.data.dataset import load_raw_data
 
 
 def load_config(config_path: str) -> dict:
