@@ -1,0 +1,22 @@
+
+model:
+  type: RandomForestClassifier
+  params:
+    n_estimators: 200
+    max_depth: 10
+    min_samples_split: 5
+
+data:
+  dataset_path: data/raw/heart.csv
+  train_path: data/processed/train.csv
+  test_path: data/processed/test.csv
+  target_column: churn
+
+features:
+  numeric:
+    - age
+    - tenure_months
+    - monthly_charges
+  categorical:
+    - contract_type
+    - payment_method
