@@ -30,3 +30,4 @@ def split_data(config):
 if __name__ == "__main__":
     config = load_config("configs/model.yaml")
     split_data(config)
+

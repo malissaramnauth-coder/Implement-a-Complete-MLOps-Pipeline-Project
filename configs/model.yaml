@@ -20,3 +20,15 @@ features:
   categorical:
     - contract_type
     - payment_method
+
+model:
+  type: "logistic_regression"
+  n_estimators: 100
+  max_depth: 10
+  random_state: 12345
+
+evaluation:
+  primary_metric: "recall"
+  min_accuracy: 0.65
+  min_recall: 0.60    
+
