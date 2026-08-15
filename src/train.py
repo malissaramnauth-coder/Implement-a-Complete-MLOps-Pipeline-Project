@@ -10,9 +10,9 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from src.process_data import split_data 
+from preprocessing import split_data 
 from src.evaluate import compute_metrics 
-from src.preprocess import build_preprocessor
+from src.preprocessing import build_preprocessor
 from src.utils.mlflow_utils import configure_mlflow, file_md5, log_run_metadata
 
 
