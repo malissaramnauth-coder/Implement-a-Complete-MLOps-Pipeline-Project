@@ -15,3 +15,11 @@ mlartifacts/
 .venv/
 venv/
 mlflow.db
+
+# Datasets
+data/processed/
+*test.csv
+*train.csv
+
+data/raw/
+*heart.csv 
