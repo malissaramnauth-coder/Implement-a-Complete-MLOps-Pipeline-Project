@@ -6,10 +6,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yaml
-from evidently import Report
-from evidently.metric_preset import DataDriftPreset
+from evidently import Dataset, Report
+from evidently.presets import DataDriftPreset
 
-from src1.data.dataset import load_raw_data
+from src.preprocessing import load_raw_data
 
 
 def load_config(config_path: str) -> dict:
@@ -20,13 +20,13 @@ def load_config(config_path: str) -> dict:
 def make_production_slice(df: pd.DataFrame, fraction: float, random_state: int) -> pd.DataFrame:
     current = df.sample(frac=fraction, random_state=random_state).copy()
     rng = np.random.default_rng(random_state)
-    if "MonthlyIncome" in current.columns:
-        current["MonthlyIncome"] = current["MonthlyIncome"] * 1.15
-    if "DistanceFromHome" in current.columns:
-        current["DistanceFromHome"] = current["DistanceFromHome"] + 2
-    if "OverTime" in current.columns:
+    if "chol" in current.columns:
+        current["chol"] = current["chol"] * 1.15
+    if "trestbps" in current.columns:
+        current["trestbps"] = current["trestbps"] + 10
+    if "exang" in current.columns:
         mask = rng.random(len(current)) > 0.35
-        current.loc[mask, "OverTime"] = "Yes"
+        current.loc[mask, "exang"] = 1
     return current
 
 
@@ -42,18 +42,29 @@ def main(config_path: str) -> None:
     current = make_production_slice(reference, fraction=fraction, random_state=random_state)
 
     report = Report(metrics=[DataDriftPreset()])
-    report.run(reference_data=reference, current_data=current)
+    snapshot = report.run(
+        reference_data=Dataset.from_pandas(reference),
+        current_data=Dataset.from_pandas(current),
+    )
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report.save_html(str(report_path))
+    snapshot.save_html(str(report_path))
 
     # Best-effort console summary compatible with Evidently's current report objects
-    result = report.as_dict()
-    overall = result["metrics"][0]["result"]
-    share = overall.get("share_of_drifted_columns", 0.0)
+    metrics = snapshot.dict()["metrics"]
+    share = 0.0
     drifted = []
-    for item in overall.get("drift_by_columns", []):
-        if item.get("drift_detected"):
-            drifted.append(item.get("column_name"))
+    for item in metrics:
+        name = item.get("metric_name", "")
+        if name.startswith("DriftedColumnsCount"):
+            share = item["value"].get("share", 0.0)
+        elif name.startswith("ValueDrift(column="):
+            column = item["config"]["column"]
+            metric_threshold = item["config"].get("threshold", 0.05)
+            is_p_value = "p_value" in item["config"].get("method", "")
+            value = item["value"]
+            column_drifted = value < metric_threshold if is_p_value else value > metric_threshold
+            if column_drifted:
+                drifted.append(column)
 
     print(f"Share of drifted columns: {share:.3f}")
     print(f"Drifted columns: {drifted}")

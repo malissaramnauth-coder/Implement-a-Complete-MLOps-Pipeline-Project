@@ -1,34 +1,58 @@
-
-model:
-  type: RandomForestClassifier
-  params:
-    n_estimators: 200
-    max_depth: 10
-    min_samples_split: 5
+project:
+  name: heart_disease_mlops
+  experiment_name: heart_disease_experiments
 
 data:
   dataset_path: data/raw/heart.csv
+  raw_data_path: data/raw/heart.csv
   train_path: data/processed/train.csv
   test_path: data/processed/test.csv
-  target_column: churn
+  target: target
+  positive_label: 1
+  drop_columns: []
+  random_state: 42
 
 features:
   numeric:
     - age
-    - tenure_months
-    - monthly_charges
+    - trestbps
+    - chol
+    - thalach
+    - oldpeak
+    - ca
   categorical:
-    - contract_type
-    - payment_method
+    - sex
+    - cp
+    - fbs
+    - restecg
+    - exang
+    - slope
+    - thal
+
+preprocessing:
+  numeric_imputer: median
+  scale_numeric: true
+  categorical_imputer: most_frequent
+  onehot_handle_unknown: ignore
 
 model:
-  type: "logistic_regression"
-  n_estimators: 100
-  max_depth: 10
-  random_state: 12345
+  model_type: random_forest
+  n_estimators: 200
+  max_depth: 8
+  min_samples_split: 4
+  min_samples_leaf: 2
+  class_weight: balanced
 
-evaluation:
-  primary_metric: "recall"
-  min_accuracy: 0.65
-  min_recall: 0.60    
+metrics:
+  accuracy: 0.75
+  recall: 0.60
 
+mlflow:
+  tracking_uri: file:./mlruns
+  artifact_path: model
+
+drift:
+  report_path: reports/drift_report.html
+  prediction_drift_threshold: 0.30
+  production_fraction: 0.25
+  random_state: 42

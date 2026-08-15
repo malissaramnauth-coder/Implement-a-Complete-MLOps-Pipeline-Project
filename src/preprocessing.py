@@ -4,6 +4,11 @@ import pandas as pd
 import yaml
 import os
 import logging
+from typing import Iterable
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split
 
 logging.basicConfig(level=logging.INFO)
@@ -12,6 +17,13 @@ def load_config(config_path):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
     return config
+
+def load_raw_data(data_path: str) -> pd.DataFrame:
+    """Load the raw dataset from *data_path* as a DataFrame."""
+    df = pd.read_csv(data_path)
+    logging.info(f"Loaded raw dataset with {df.shape[0]} rows from {data_path}.")
+    return df
+
 
 def split_data(config):
     # Load dataset

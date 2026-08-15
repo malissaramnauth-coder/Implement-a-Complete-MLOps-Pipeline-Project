@@ -5,16 +5,15 @@ from pathlib import Path
 
 import joblib
 import mlflow
+import pandas as pd
 import yaml
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from preprocessing import split_data 
-from src.evaluate import compute_metrics 
-from src.preprocessing import build_preprocessor
-from src.utils.mlflow_utils import configure_mlflow, file_md5, log_run_metadata
-
+from src.preprocessing import split_data, build_preprocessor, prepare_features
+from src.evaluate import compute_metrics
+from src.utils import configure_mlflow, file_md5, log_run_metadata
 
 def load_config(config_path: str) -> dict:
     with open(config_path, "r", encoding="utf-8") as f:
@@ -46,13 +45,42 @@ def build_model(config: dict):
         )
     raise ValueError(f"Unsupported model_type: {model_type}")
 
+def load_and_prepare_data(config_path: str):
+    """Split the raw dataset and return train/test feature matrices and targets."""
+    config = load_config(config_path)
+    split_data(config)
+
+    train_df = pd.read_csv(config["data"]["train_path"])
+    test_df = pd.read_csv(config["data"]["test_path"])
+
+    X_train, y_train = prepare_features(train_df, config)
+    X_test, y_test = prepare_features(test_df, config)
+    return X_train, X_test, y_train, y_test
+
+def evaluate_classification_model(pipeline, X_test, y_test) -> dict:
+    """Run the fitted pipeline on the held-out test set and compute metrics."""
+    y_pred = pipeline.predict(X_test)
+    return compute_metrics(y_test, y_pred)
+
+def validate_metric_thresholds(metrics: dict, thresholds: dict) -> None:
+    """Raise ``ValueError`` if any metric falls below its configured minimum."""
+    failures = [
+        f"{name}={metrics[name]:.4f} < {min_value}"
+        for name, min_value in thresholds.items()
+        if metrics.get(name, 0.0) < min_value
+    ]
+    if failures:
+        raise ValueError(f"Model failed metric thresholds: {', '.join(failures)}")
+    
 
 def main(config_path: str) -> None:
     config = load_config(config_path)
     configure_mlflow(config["mlflow"]["tracking_uri"], config["project"]["experiment_name"])
 
     X_train, X_test, y_train, y_test = load_and_prepare_data(config_path)
-    preprocessor = build_preprocessor(X_train)
+    preprocessor = build_preprocessor(
+        config["features"]["numeric"], config["features"]["categorical"], config
+    )
     model = build_model(config)
 
     pipeline = Pipeline([("preprocessor", preprocessor), ("model", model)])
